@@ -63,6 +63,16 @@ router.put('/:id', [
   }
 
   try {
+    const { serial } = req.body;
+    // Verificar si el nuevo serial ya está en uso
+    if (serial) {
+      const existingMedia = await Media.findOne({ serial });
+      if (existingMedia && existingMedia._id.toString() !== req.params.id) {
+        return res.status(400).json({ message: 'El serial ya está en uso' });
+      }
+    }
+
+    // Actualizar el documento
     const media = await Media.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!media) {
       return res.status(404).json({ message: 'Película/Serie no encontrada' });
