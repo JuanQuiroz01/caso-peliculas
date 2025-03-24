@@ -36,7 +36,7 @@ router.post('/', [
 });
 
 // Actualizar una productora por ID
-router.put('/:id', [
+router.put('/:idproductora', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
   check('slogan', 'El slogan debe ser una cadena de texto').optional().isString(),
@@ -59,7 +59,7 @@ router.put('/:id', [
 });
 
 // Eliminar una productora por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:idproductora', async (req, res) => {
   try {
     const productora = await Productora.findByIdAndDelete(req.params.id);
     if (!productora) {

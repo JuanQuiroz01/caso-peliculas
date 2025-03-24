@@ -34,7 +34,7 @@ router.post('/', [
 });
 
 // Actualizar un tipo por ID
-router.put('/:id', [
+router.put('/:idtipo', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
 ], async (req, res) => {
@@ -55,7 +55,7 @@ router.put('/:id', [
 });
 
 // Eliminar un tipo por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:idproductora', async (req, res) => {
   try {
     const tipo = await Tipo.findByIdAndDelete(req.params.id);
     if (!tipo) {

@@ -46,7 +46,7 @@ router.post('/', [
 });
 
 // Actualizar una película/serie por ID
-router.put('/:id', [
+router.put('/:idmedia', [
   check('titulo', 'El título es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('sinopsis', 'La sinopsis es obligatoria y debe ser una cadena de texto').optional().isString(),
   check('url', 'La URL es obligatoria y debe ser una cadena de texto').optional().isString(),
@@ -84,7 +84,7 @@ router.put('/:id', [
 });
 
 // Eliminar una película/serie por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:idmedia', async (req, res) => {
   try {
     const media = await Media.findByIdAndDelete(req.params.id);
     if (!media) {

@@ -1,12 +1,14 @@
 const express = require('express');
 const { getConnection } = require('./db/connect-mongo'); // Importar la función de conexión
-
+const cors = require('cors');
 // Para variables de entorno
 require('dotenv').config()
 
 
 const app = express();
 const port = process.env.PORT;
+app.use(cors());
+
 
 // Conexión a MongoDB
 getConnection();

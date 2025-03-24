@@ -35,7 +35,7 @@ router.post('/', [
 });
 
 // Actualizar un género por ID
-router.put('/:id', [
+router.put('/:idgenero', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
@@ -57,7 +57,7 @@ router.put('/:id', [
 });
 
 // Eliminar un género por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:idgenero', async (req, res) => {
   try {
     const genero = await Genero.findByIdAndDelete(req.params.id);
     if (!genero) {

@@ -34,7 +34,7 @@ router.post('/', [
 });
 
 // Actualizar un director por ID
-router.put('/:id', [
+router.put('/:iddirector', [
   check('nombres', 'Los nombres son obligatorios y deben ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
 ], async (req, res) => {
@@ -55,7 +55,7 @@ router.put('/:id', [
 });
 
 // Eliminar un director por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:iddirector', async (req, res) => {
   try {
     const director = await Director.findByIdAndDelete(req.params.id);
     if (!director) {
