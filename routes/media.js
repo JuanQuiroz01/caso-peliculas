@@ -1,18 +1,45 @@
 const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
+const { Types } = require('mongoose');
 const Media = require('../models/Media');
 
 const router = Router();
 
-// Obtener todas las películas/series
+// Validar que el ID sea un ObjectId válido
+const validarId = (id) => {
+  return Types.ObjectId.isValid(id);
+};
+
+// Obtener todas las películas/series con datos poblados
 router.get('/', async (req, res) => {
   try {
     const media = await Media.find()
-      .populate('generoPrincipal', 'nombre estado -_id') // Solo 'nombre' y 'estado'
-      .populate('directorPrincipal', 'nombres estado -_id') // Solo 'nombres' y 'estado'
-      .populate('productora', 'nombre estado -_id') // Solo 'nombre' y 'estado','
-      .populate('tipo', 'nombre -_id'); // Solo 'nombre'
+      .populate('generoPrincipal', 'nombre')
+      .populate('directorPrincipal', 'nombres')
+      .populate('productora', 'nombre')
+      .populate('tipo', 'nombre');
+    res.json(media);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
+// Obtener una película/serie por ID
+router.get('/:id', async (req, res) => {
+  if (!validarId(req.params.id)) {
+    return res.status(400).json({ message: 'ID no válido' });
+  }
+
+  try {
+    const media = await Media.findById(req.params.id)
+      .populate('generoPrincipal', 'nombre')
+      .populate('directorPrincipal', 'nombres')
+      .populate('productora', 'nombre')
+      .populate('tipo', 'nombre');
+
+    if (!media) {
+      return res.status(404).json({ message: 'Película/Serie no encontrada' });
+    }
     res.json(media);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -21,15 +48,15 @@ router.get('/', async (req, res) => {
 
 // Crear una nueva película/serie
 router.post('/', [
-  check('titulo', 'El título es obligatorio y debe ser una cadena de texto').not().isEmpty().isString(),
-  check('sinopsis', 'La sinopsis es obligatoria y debe ser una cadena de texto').not().isEmpty().isString(),
-  check('url', 'La URL es obligatoria y debe ser una cadena de texto').not().isEmpty().isString(),
-  check('imagenPortada', 'La imagen de portada es obligatoria y debe ser una cadena de texto').not().isEmpty().isString(),
-  check('añoEstreno', 'El año de estreno es obligatorio y debe ser un número').not().isEmpty().isNumeric(),
-  check('generoPrincipal', 'El género principal es obligatorio').not().isEmpty(),
-  check('directorPrincipal', 'El director principal es obligatorio').not().isEmpty(),
-  check('productora', 'La productora es obligatoria').not().isEmpty(),
-  check('tipo', 'El tipo es obligatorio').not().isEmpty(),
+  check('titulo', 'El título es obligatorio').not().isEmpty(),
+  check('sinopsis', 'La sinopsis es obligatoria').not().isEmpty(),
+  check('url', 'La URL es obligatoria').not().isEmpty(),
+  check('imagenPortada', 'La imagen de portada es obligatoria').not().isEmpty(),
+  check('añoEstreno', 'El año de estreno es obligatorio').isInt({ min: 1900, max: new Date().getFullYear() }),
+  check('generoPrincipal', 'El género principal es obligatorio').isMongoId(),
+  check('directorPrincipal', 'El director principal es obligatorio').isMongoId(),
+  check('productora', 'La productora es obligatoria').isMongoId(),
+  check('tipo', 'El tipo es obligatorio').isMongoId(),
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -37,6 +64,12 @@ router.post('/', [
   }
 
   try {
+    // Verificar si el serial ya existe
+    const existingMedia = await Media.findOne({ serial: req.body.serial });
+    if (existingMedia) {
+      return res.status(400).json({ message: 'El serial ya está en uso' });
+    }
+
     const media = new Media(req.body);
     await media.save();
     res.status(201).json(media);
@@ -46,16 +79,16 @@ router.post('/', [
 });
 
 // Actualizar una película/serie por ID
-router.put('/:idmedia', [
-  check('titulo', 'El título es obligatorio y debe ser una cadena de texto').optional().isString(),
-  check('sinopsis', 'La sinopsis es obligatoria y debe ser una cadena de texto').optional().isString(),
-  check('url', 'La URL es obligatoria y debe ser una cadena de texto').optional().isString(),
-  check('imagenPortada', 'La imagen de portada es obligatoria y debe ser una cadena de texto').optional().isString(),
-  check('añoEstreno', 'El año de estreno es obligatorio y debe ser un número').optional().isNumeric(),
-  check('generoPrincipal', 'El género principal es obligatorio').optional().not().isEmpty(),
-  check('directorPrincipal', 'El director principal es obligatorio').optional().not().isEmpty(),
-  check('productora', 'La productora es obligatoria').optional().not().isEmpty(),
-  check('tipo', 'El tipo es obligatorio').optional().not().isEmpty(),
+router.put('/:id', [
+  check('titulo', 'El título es obligatorio').optional().not().isEmpty(),
+  check('sinopsis', 'La sinopsis es obligatoria').optional().not().isEmpty(),
+  check('url', 'La URL es obligatoria').optional().not().isEmpty(),
+  check('imagenPortada', 'La imagen de portada es obligatoria').optional().not().isEmpty(),
+  check('añoEstreno', 'El año de estreno es obligatorio').optional().isInt({ min: 1900, max: new Date().getFullYear() }),
+  check('generoPrincipal', 'El género principal es obligatorio').optional().isMongoId(),
+  check('directorPrincipal', 'El director principal es obligatorio').optional().isMongoId(),
+  check('productora', 'La productora es obligatoria').optional().isMongoId(),
+  check('tipo', 'El tipo es obligatorio').optional().isMongoId(),
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -63,17 +96,17 @@ router.put('/:idmedia', [
   }
 
   try {
-    const { serial } = req.body;
-    // Verificar si el nuevo serial ya está en uso
-    if (serial) {
-      const existingMedia = await Media.findOne({ serial });
-      if (existingMedia && existingMedia._id.toString() !== req.params.id) {
-        return res.status(400).json({ message: 'El serial ya está en uso' });
-      }
-    }
+    const datosActualizados = {
+      ...req.body,
+      fechaActualizacion: Date.now()
+    };
 
-    // Actualizar el documento
-    const media = await Media.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const media = await Media.findByIdAndUpdate(
+      req.params.id,
+      datosActualizados,
+      { new: true, runValidators: true }
+    );
+
     if (!media) {
       return res.status(404).json({ message: 'Película/Serie no encontrada' });
     }
@@ -84,7 +117,11 @@ router.put('/:idmedia', [
 });
 
 // Eliminar una película/serie por ID
-router.delete('/:idmedia', async (req, res) => {
+router.delete('/:id', async (req, res) => {
+  if (!validarId(req.params.id)) {
+    return res.status(400).json({ message: 'ID no válido' });
+  }
+
   try {
     const media = await Media.findByIdAndDelete(req.params.id);
     if (!media) {

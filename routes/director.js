@@ -34,6 +34,7 @@ router.post('/', [
 });
 
 // Actualizar un director por ID
+// Actualizar un director por ID
 router.put('/:iddirector', [
   check('nombres', 'Los nombres son obligatorios y deben ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
@@ -44,7 +45,17 @@ router.put('/:iddirector', [
   }
 
   try {
-    const director = await Director.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const datosActualizados = {
+      ...req.body,
+      fechaActualizacion: Date.now() // Agregar esta línea para actualizar la fecha
+    };
+
+    const director = await Director.findByIdAndUpdate(
+      req.params.iddirector,
+      datosActualizados,
+      { new: true }
+    );
+    
     if (!director) {
       return res.status(404).json({ message: 'Director no encontrado' });
     }
@@ -57,7 +68,7 @@ router.put('/:iddirector', [
 // Eliminar un director por ID
 router.delete('/:iddirector', async (req, res) => {
   try {
-    const director = await Director.findByIdAndDelete(req.params.id);
+    const director = await Director.findByIdAndDelete(req.params.iddirector); // Cambiado a iddirector
     if (!director) {
       return res.status(404).json({ message: 'Director no encontrado' });
     }

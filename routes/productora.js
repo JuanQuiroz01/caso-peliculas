@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
+const { Types } = require('mongoose');
 const Productora = require('../models/Productora');
 
 const router = Router();
@@ -18,7 +19,6 @@ router.get('/', async (req, res) => {
 router.post('/', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').not().isEmpty().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').isIn(['Activo', 'Inactivo']),
-  check('slogan', 'El slogan debe ser una cadena de texto').optional().isString(),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
 ], async (req, res) => {
   const errors = validationResult(req);
@@ -39,7 +39,6 @@ router.post('/', [
 router.put('/:idproductora', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
-  check('slogan', 'El slogan debe ser una cadena de texto').optional().isString(),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
 ], async (req, res) => {
   const errors = validationResult(req);
@@ -48,7 +47,17 @@ router.put('/:idproductora', [
   }
 
   try {
-    const productora = await Productora.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const datosActualizados = {
+      ...req.body,
+      fechaActualizacion: Date.now() // Actualiza la fecha automáticamente
+    };
+
+    const productora = await Productora.findByIdAndUpdate(
+      req.params.idproductora, // Corregido a idproductora
+      datosActualizados,
+      { new: true, runValidators: true }
+    );
+    
     if (!productora) {
       return res.status(404).json({ message: 'Productora no encontrada' });
     }
@@ -61,7 +70,7 @@ router.put('/:idproductora', [
 // Eliminar una productora por ID
 router.delete('/:idproductora', async (req, res) => {
   try {
-    const productora = await Productora.findByIdAndDelete(req.params.id);
+    const productora = await Productora.findByIdAndDelete(req.params.idproductora); // Corregido a idproductora
     if (!productora) {
       return res.status(404).json({ message: 'Productora no encontrada' });
     }

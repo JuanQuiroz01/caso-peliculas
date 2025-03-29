@@ -1,8 +1,14 @@
 const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
+const { Types } = require('mongoose');
 const Tipo = require('../models/Tipo');
 
 const router = Router();
+
+// Validar que el ID sea un ObjectId válido
+const validarId = (id) => {
+  return Types.ObjectId.isValid(id);
+};
 
 // Obtener todos los tipos
 router.get('/', async (req, res) => {
@@ -44,7 +50,17 @@ router.put('/:idtipo', [
   }
 
   try {
-    const tipo = await Tipo.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const datosActualizados = {
+      ...req.body,
+      fechaActualizacion: Date.now() // Actualiza la fecha automáticamente
+    };
+
+    const tipo = await Tipo.findByIdAndUpdate(
+      req.params.idtipo, // Corregido a idtipo
+      datosActualizados,
+      { new: true, runValidators: true }
+    );
+
     if (!tipo) {
       return res.status(404).json({ message: 'Tipo no encontrado' });
     }
@@ -55,9 +71,14 @@ router.put('/:idtipo', [
 });
 
 // Eliminar un tipo por ID
-router.delete('/:idproductora', async (req, res) => {
+router.delete('/:idtipo', async (req, res) => {
+  // Validar el ID
+  if (!validarId(req.params.idtipo)) {
+    return res.status(400).json({ message: 'ID no válido' });
+  }
+
   try {
-    const tipo = await Tipo.findByIdAndDelete(req.params.id);
+    const tipo = await Tipo.findByIdAndDelete(req.params.idtipo); // Corregido a idtipo
     if (!tipo) {
       return res.status(404).json({ message: 'Tipo no encontrado' });
     }

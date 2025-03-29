@@ -1,8 +1,14 @@
 const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
+const { Types } = require('mongoose');
 const Genero = require('../models/Genero');
 
 const router = Router();
+
+// Validar que el ID sea un ObjectId válido
+const validarId = (id) => {
+  return Types.ObjectId.isValid(id);
+};
 
 // Obtener todos los géneros
 router.get('/', async (req, res) => {
@@ -34,32 +40,54 @@ router.post('/', [
   }
 });
 
-// Actualizar un género por ID
+// Actualizar un género por ID (usando idgenero)
 router.put('/:idgenero', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
 ], async (req, res) => {
+  // Validar los datos de entrada
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
+  // Validar el ID
+  if (!validarId(req.params.idgenero)) {
+    return res.status(400).json({ message: 'ID no válido' });
+  }
+
   try {
-    const genero = await Genero.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const datosActualizados = {
+      ...req.body,
+      fechaActualizacion: Date.now() // Actualiza la fecha automáticamente
+    };
+
+    const genero = await Genero.findByIdAndUpdate(
+      req.params.idgenero,
+      datosActualizados,
+      { new: true, runValidators: true }
+    );
+
     if (!genero) {
       return res.status(404).json({ message: 'Género no encontrado' });
     }
+
     res.json(genero);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// Eliminar un género por ID
+// Eliminar un género por ID (usando idgenero)
 router.delete('/:idgenero', async (req, res) => {
+  // Validar el ID
+  if (!validarId(req.params.idgenero)) {
+    return res.status(400).json({ message: 'ID no válido' });
+  }
+
   try {
-    const genero = await Genero.findByIdAndDelete(req.params.id);
+    const genero = await Genero.findByIdAndDelete(req.params.idgenero);
     if (!genero) {
       return res.status(404).json({ message: 'Género no encontrado' });
     }
