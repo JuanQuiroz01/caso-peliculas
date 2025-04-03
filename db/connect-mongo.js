@@ -8,6 +8,7 @@ const getConnection = async () => {
         console.log('conexion exitosa')
     }catch(error){
         console.log(error);
+        process.exit(1);
     }
 }
     module.exports = {
