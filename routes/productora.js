@@ -2,11 +2,16 @@ const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
 const { Types } = require('mongoose');
 const Productora = require('../models/Productora');
+const express = require('express');
+const router = express.Router();
+const { verificarToken, soloAdmin } = require('../middleware/auth');
 
-const router = Router();
+
+
+
 
 // Obtener todas las productoras
-router.get('/', async (req, res) => {
+router.get('/', verificarToken, soloAdmin,async (req, res) => {
   try {
     const productoras = await Productora.find();
     res.json(productoras);
@@ -20,7 +25,7 @@ router.post('/', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').not().isEmpty().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').isIn(['Activo', 'Inactivo']),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
-], async (req, res) => {
+], verificarToken, soloAdmin,async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -40,7 +45,7 @@ router.put('/:idproductora', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
-], async (req, res) => {
+], verificarToken, soloAdmin,async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -68,7 +73,7 @@ router.put('/:idproductora', [
 });
 
 // Eliminar una productora por ID
-router.delete('/:idproductora', async (req, res) => {
+router.delete('/:idproductora', verificarToken, soloAdmin,async (req, res) => {
   try {
     const productora = await Productora.findByIdAndDelete(req.params.idproductora); // Corregido a idproductora
     if (!productora) {

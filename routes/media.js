@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
 const { Types } = require('mongoose');
 const Media = require('../models/Media');
-
+const { verificarToken, soloAdmin } = require('../middleware/auth');
 const router = Router();
 
 // Validar que el ID sea un ObjectId válido
@@ -11,7 +11,7 @@ const validarId = (id) => {
 };
 
 // Obtener todas las películas/series con datos poblados
-router.get('/', async (req, res) => {
+router.get('/', verificarToken,  async (req, res) => {
   try {
     const media = await Media.find()
       .populate('generoPrincipal', 'nombre')
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 });
 
 // Obtener una película/serie por ID
-router.get('/:id', async (req, res) => {
+router.get('/:id',verificarToken, async (req, res) => {
   if (!validarId(req.params.id)) {
     return res.status(400).json({ message: 'ID no válido' });
   }
@@ -57,7 +57,7 @@ router.post('/', [
   check('directorPrincipal', 'El director principal es obligatorio').isMongoId(),
   check('productora', 'La productora es obligatoria').isMongoId(),
   check('tipo', 'El tipo es obligatorio').isMongoId(),
-], async (req, res) => {
+], verificarToken, soloAdmin, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -89,7 +89,7 @@ router.put('/:id', [
   check('directorPrincipal', 'El director principal es obligatorio').optional().isMongoId(),
   check('productora', 'La productora es obligatoria').optional().isMongoId(),
   check('tipo', 'El tipo es obligatorio').optional().isMongoId(),
-], async (req, res) => {
+],verificarToken, soloAdmin, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -117,7 +117,7 @@ router.put('/:id', [
 });
 
 // Eliminar una película/serie por ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verificarToken, soloAdmin,async (req, res) => {
   if (!validarId(req.params.id)) {
     return res.status(400).json({ message: 'ID no válido' });
   }

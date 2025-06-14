@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
 const { Types } = require('mongoose');
 const Tipo = require('../models/Tipo');
-
+const { verificarToken, soloAdmin } = require('../middleware/auth');
 const router = Router();
 
 // Validar que el ID sea un ObjectId válido
@@ -11,7 +11,7 @@ const validarId = (id) => {
 };
 
 // Obtener todos los tipos
-router.get('/', async (req, res) => {
+router.get('/', verificarToken, soloAdmin,async (req, res) => {
   try {
     const tipos = await Tipo.find();
     res.json(tipos);
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 router.post('/', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').not().isEmpty().isString(),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
-], async (req, res) => {
+], verificarToken, soloAdmin,async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -43,7 +43,7 @@ router.post('/', [
 router.put('/:idtipo', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
-], async (req, res) => {
+], verificarToken, soloAdmin,async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -71,7 +71,7 @@ router.put('/:idtipo', [
 });
 
 // Eliminar un tipo por ID
-router.delete('/:idtipo', async (req, res) => {
+router.delete('/:idtipo',verificarToken, soloAdmin, async (req, res) => {
   // Validar el ID
   if (!validarId(req.params.idtipo)) {
     return res.status(400).json({ message: 'ID no válido' });

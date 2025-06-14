@@ -2,8 +2,10 @@ const { Router } = require('express');
 const { check, validationResult } = require('express-validator');
 const { Types } = require('mongoose');
 const Genero = require('../models/Genero');
-
 const router = Router();
+const { verificarToken, soloAdmin } = require('../middleware/auth');
+
+
 
 // Validar que el ID sea un ObjectId válido
 const validarId = (id) => {
@@ -11,7 +13,7 @@ const validarId = (id) => {
 };
 
 // Obtener todos los géneros
-router.get('/', async (req, res) => {
+router.get('/', verificarToken, soloAdmin,async (req, res) => {
   try {
     const generos = await Genero.find();
     res.json(generos);
@@ -25,7 +27,7 @@ router.post('/', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').not().isEmpty().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').isIn(['Activo', 'Inactivo']),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
-], async (req, res) => {
+], verificarToken, soloAdmin,async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -45,7 +47,7 @@ router.put('/:idgenero', [
   check('nombre', 'El nombre es obligatorio y debe ser una cadena de texto').optional().isString(),
   check('estado', 'El estado debe ser "Activo" o "Inactivo"').optional().isIn(['Activo', 'Inactivo']),
   check('descripcion', 'La descripción debe ser una cadena de texto').optional().isString(),
-], async (req, res) => {
+], verificarToken, soloAdmin,async (req, res) => {
   // Validar los datos de entrada
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -80,7 +82,7 @@ router.put('/:idgenero', [
 });
 
 // Eliminar un género por ID (usando idgenero)
-router.delete('/:idgenero', async (req, res) => {
+router.delete('/:idgenero', verificarToken, soloAdmin,async (req, res) => {
   // Validar el ID
   if (!validarId(req.params.idgenero)) {
     return res.status(400).json({ message: 'ID no válido' });

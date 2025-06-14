@@ -22,7 +22,7 @@ app.use('/directores', require('./routes/director')); // Ruta para Director
 app.use('/productoras', require('./routes/productora')); // Ruta para Productora
 app.use('/tipos', require('./routes/tipo')); // Ruta para Tipo
 app.use('/media', require('./routes/media')); // Ruta para Media
-
+app.use('/usuarios', require('./routes/usuario'));
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
